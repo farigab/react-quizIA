@@ -21,33 +21,6 @@ export default function LoadingScreen({ theme }: Readonly<LoadingScreenProps>) {
                 },
             }}
         >
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                <CircularProgress
-                    size={72}
-                    thickness={3}
-                    sx={{
-                        color: 'primary.main',
-                        '& .MuiCircularProgress-circle': {
-                            strokeLinecap: 'round',
-                        },
-                    }}
-                />
-                <Box
-                    sx={{
-                        top: 0,
-                        left: 0,
-                        bottom: 0,
-                        right: 0,
-                        position: 'absolute',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <Typography sx={{ fontSize: 28 }}>🤖</Typography>
-                </Box>
-            </Box>
-
             <Box sx={{ textAlign: 'center' }}>
                 <Typography
                     variant="h5"
