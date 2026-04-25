@@ -3,7 +3,7 @@ import {
     Alert,
     Box,
     Button,
-    Grid,
+    Grid2,
     IconButton,
     TextField,
     Typography,
@@ -38,7 +38,7 @@ const safeStorage: {
     set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* ignore storage errors */ } },
 };
 
-export default function IntroScreen({ onStart, loadError }: IntroScreenProps) {
+export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreenProps>) {
     const [selected, setSelected] = useState<string | null>(() => safeStorage.get(STORAGE_KEY) || null);
     const initialCustom = (() => {
         const stored = safeStorage.get(STORAGE_KEY);
@@ -79,7 +79,7 @@ export default function IntroScreen({ onStart, loadError }: IntroScreenProps) {
     const handleDice = () => {
         if (rolling) return;
         setRolling(true);
-        rollTimeoutRef.current = window.setTimeout(() => {
+        rollTimeoutRef.current = globalThis.setTimeout(() => {
             setRolling(false);
             const rand = THEMES[Math.floor(Math.random() * THEMES.length)];
             setSelected(rand);
@@ -114,11 +114,11 @@ export default function IntroScreen({ onStart, loadError }: IntroScreenProps) {
             )}
 
             {/* Grid de Temas */}
-            <Grid container spacing={1.5}>
+            <Grid2 container spacing={1.5}>
                 {THEMES.map((theme) => {
                     const isActive = selected === theme;
                     return (
-                        <Grid item xs={6} sm={4} key={theme}>
+                        <Grid2 size={{ xs: 6, sm: 4 }} key={theme}>
                             <Button
                                 fullWidth
                                 disableElevation
@@ -143,10 +143,10 @@ export default function IntroScreen({ onStart, loadError }: IntroScreenProps) {
                             >
                                 {theme}
                             </Button>
-                        </Grid>
+                        </Grid2>
                     );
                 })}
-            </Grid>
+            </Grid2>
 
             {/* Botão de Dado Centralizado */}
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 1 }}>

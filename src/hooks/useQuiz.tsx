@@ -8,12 +8,15 @@ const SERVER_BASE = import.meta.env.VITE_SERVER_BASE || '';
 
 type Question = { theme?: string; answerIndex?: number;[key: string]: unknown };
 
-const safeStorage = {
-  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
-  set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignore storage errors */ } },
+const safeStorage: {
+  get: (k: string) => string | null;
+  set: (k: string, v: string) => void;
+} = {
+  get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* ignore storage errors */ } },
 };
 
-function pickRandom(arr, n) {
+function pickRandom<T>(arr: T[], n: number): T[] {
   const clone = [...arr];
   for (let i = clone.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -24,22 +27,22 @@ function pickRandom(arr, n) {
 
 // Screens: 'intro' | 'loading' | 'question' | 'final'
 export function useQuiz() {
-  const [screen, setScreen] = useState('intro');
-  const [currentTheme, setCurrentTheme] = useState(null);
-  const [, setQuestions] = useState<Question[]>([]);
-  const [selected, setSelected] = useState([]);
-  const [current, setCurrent] = useState(0);
-  const [score, setScore] = useState(0);
-  const [answered, setAnswered] = useState(false);
-  const [chosenIdx, setChosenIdx] = useState(null);
-  const [highScore, setHighScore] = useState(() => Number(safeStorage.get('showdo_miau_highscore') || 0));
-  const [isNewRecord, setIsNewRecord] = useState(false);
-  const [loadError, setLoadError] = useState(null);
-  const [autoAdvanceProgress, setAutoAdvanceProgress] = useState(100);
+  const [screen, setScreen] = useState<'intro' | 'loading' | 'question' | 'final'>('intro');
+  const [currentTheme, setCurrentTheme] = useState<string | null>(null);
+  const questionsRef = useRef<Question[] | null>(null);
+  const [selected, setSelected] = useState<Question[]>([]);
+  const [current, setCurrent] = useState<number>(0);
+  const [score, setScore] = useState<number>(0);
+  const [answered, setAnswered] = useState<boolean>(false);
+  const [chosenIdx, setChosenIdx] = useState<number | null>(null);
+  const [highScore, setHighScore] = useState<number>(() => Number(safeStorage.get('showdo_miau_highscore') || 0));
+  const [isNewRecord, setIsNewRecord] = useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [autoAdvanceProgress, setAutoAdvanceProgress] = useState<number>(100);
 
-  const controllerRef = useRef(null);
-  const autoAdvanceTimerRef = useRef(null);
-  const progressIntervalRef = useRef(null);
+  const controllerRef = useRef<AbortController | null>(null);
+  const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearTimers = useCallback(() => {
     if (autoAdvanceTimerRef.current) {
@@ -53,7 +56,7 @@ export function useQuiz() {
     setAutoAdvanceProgress(100);
   }, []);
 
-  const startAutoAdvance = useCallback((onAdvance) => {
+  const startAutoAdvance = useCallback((onAdvance: () => void) => {
     if (!AUTO_ADVANCE_ENABLED) return;
     clearTimers();
     setAutoAdvanceProgress(100);
@@ -69,7 +72,7 @@ export function useQuiz() {
     }, AUTO_ADVANCE_DELAY);
   }, [clearTimers]);
 
-  const startGame = useCallback(async (theme) => {
+  const startGame = useCallback(async (theme: string | null = null) => {
     setCurrentTheme(theme);
     setLoadError(null);
     setScreen('loading');
@@ -79,16 +82,17 @@ export function useQuiz() {
       try { controllerRef.current.abort(); } catch { /* ignore abort errors */ }
     }
 
-    let loadedQuestions = null;
+    let loadedQuestions: Question[] | null = null;
 
     if (theme) {
       try {
-        controllerRef.current = new AbortController();
+        const ctrl = new AbortController();
+        controllerRef.current = ctrl;
         const resp = await fetch(`${SERVER_BASE}/api/generate-questions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ theme, count: NUM_QUESTIONS }),
-          signal: controllerRef.current.signal,
+          signal: ctrl.signal,
         });
         controllerRef.current = null;
         if (resp.ok) {
@@ -97,8 +101,11 @@ export function useQuiz() {
             loadedQuestions = data.questions;
           }
         }
-      } catch (err) {
-        if (err?.name === 'AbortError') return;
+      } catch (err: unknown) {
+        const errName = (typeof err === 'object' && err !== null && 'name' in err && typeof (err as Record<string, unknown>).name === 'string')
+          ? (err as { name: string }).name
+          : undefined;
+        if (errName === 'AbortError') return;
         controllerRef.current = null;
         console.warn('Falha ao chamar servidor generativo:', err);
       }
@@ -116,16 +123,16 @@ export function useQuiz() {
       }
     }
 
-    let pool = loadedQuestions;
+    let pool: Question[] = loadedQuestions ?? [];
     if (theme && theme !== 'Diversos') {
-      const filtered = loadedQuestions.filter(
+      const filtered = pool.filter(
         (q) => String(q.theme || '').toLowerCase() === String(theme).toLowerCase()
       );
       if (filtered.length >= 3) pool = filtered;
     }
 
-    const sel = pickRandom(pool, NUM_QUESTIONS);
-    setQuestions(loadedQuestions);
+    const sel = pickRandom<Question>(pool, NUM_QUESTIONS);
+    questionsRef.current = loadedQuestions;
     setSelected(sel);
     setCurrent(0);
     setScore(0);
@@ -134,7 +141,7 @@ export function useQuiz() {
     setScreen('question');
   }, [clearTimers]);
 
-  const handleChoice = useCallback((idx) => {
+  const handleChoice = useCallback((idx: number) => {
     if (answered) return;
     setAnswered(true);
     setChosenIdx(idx);
@@ -192,7 +199,8 @@ export function useQuiz() {
   const currentQuestion = selected[current] ?? null;
   const correctIdx = Number(currentQuestion?.answerIndex ?? 0);
   const progressPct = selected.length ? (current / selected.length) * 100 : 0;
-  const answeredProgressPct = selected.length ? ((current + (answered ? 1 : 0)) / selected.length) * 100 : 0;
+  const answeredOffset = answered ? 1 : 0;
+  const answeredProgressPct = selected.length ? ((current + answeredOffset) / selected.length) * 100 : 0;
 
   return {
     screen,
