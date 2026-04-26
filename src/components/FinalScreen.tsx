@@ -1,143 +1,17 @@
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ReplayIcon from '@mui/icons-material/Replay';
 import StarIcon from '@mui/icons-material/Star';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, Divider, Typography } from '@mui/material';
 import { useEffect, useRef } from 'react';
 
 const getRating = (score: number, total: number) => {
     const pct = (score / total) * 100;
-    if (pct === 100) return { emoji: '🏆', label: 'Perfeito!', color: '#f59e0b', bg: '#fef3c7' };
-    if (pct >= 80) return { emoji: '🌟', label: 'Excelente!', color: '#5c67f2', bg: '#eef0fd' };
-    if (pct >= 60) return { emoji: '👍', label: 'Muito bom!', color: '#10b981', bg: '#d1fae5' };
-    if (pct >= 40) return { emoji: '📚', label: 'Continue!', color: '#f97316', bg: '#ffedd5' };
-    return { emoji: '💪', label: 'Treine mais!', color: '#ef4444', bg: '#fee2e2' };
+    if (pct === 100) return { emoji: '🏆', label: 'Perfeito!', color: '#b45309' };
+    if (pct >= 80) return { emoji: '🌟', label: 'Excelente!', color: '#5c67f2' };
+    if (pct >= 60) return { emoji: '👍', label: 'Muito bom!', color: '#16a34a' };
+    if (pct >= 40) return { emoji: '📚', label: 'Continue!', color: '#ea580c' };
+    return { emoji: '💪', label: 'Treine mais!', color: '#dc2626' };
 };
-
-const formatErrors = (count: number) =>
-    count === 1 ? '1 erro' : `${count} erros`;
-
-// Confetti particle - pure CSS animation
-function Confetti() {
-    const particles = Array.from({ length: 20 }, (_, i) => i);
-    const colors = ['#5c67f2', '#f59e0b', '#10b981', '#f97316', '#ec4899', '#06b6d4'];
-
-    return (
-        <Box
-            sx={{
-                position: 'absolute',
-                inset: 0,
-                overflow: 'hidden',
-                pointerEvents: 'none',
-                borderRadius: 'inherit',
-            }}
-        >
-            {particles.map((i) => {
-                const color = colors[i % colors.length];
-                const left = `${(i / particles.length) * 100}%`;
-                const delay = `${(i * 0.08)}s`;
-                const duration = `${0.8 + (i % 4) * 0.15}s`;
-                const SIZES = [6, 5, 4];
-                const size = SIZES[i % 3];
-                return (
-                    <Box
-                        key={i}
-                        sx={{
-                            position: 'absolute',
-                            top: '-8px',
-                            left,
-                            width: size,
-                            height: size,
-                            bgcolor: color,
-                            borderRadius: i % 2 === 0 ? '50%' : '2px',
-                            animation: `confettiFall ${duration} ${delay} ease-out forwards`,
-                            '@keyframes confettiFall': {
-                                '0%': {
-                                    transform: 'translateY(0) rotate(0deg)',
-                                    opacity: 1,
-                                },
-                                '100%': {
-                                    transform: `translateY(200px) rotate(${i % 2 === 0 ? 360 : -360}deg) translateX(${(i % 5 - 2) * 20}px)`,
-                                    opacity: 0,
-                                },
-                            },
-                        }}
-                    />
-                );
-            })}
-        </Box>
-    );
-}
-
-// Circular SVG score ring
-function ScoreRing({
-    score,
-    total,
-    color,
-}: Readonly<{
-    score: number;
-    total: number;
-    color: string;
-}>) {
-    const pct = score / total;
-    const r = 44;
-    const circ = 2 * Math.PI * r;
-    const dash = pct * circ;
-
-    return (
-        <Box sx={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
-            <svg
-                width="120"
-                height="120"
-                viewBox="0 0 120 120"
-                style={{ transform: 'rotate(-90deg)' }}
-            >
-                {/* Track */}
-                <circle
-                    cx="60"
-                    cy="60"
-                    r={r}
-                    fill="none"
-                    stroke="#e2e8f0"
-                    strokeWidth="8"
-                />
-                {/* Progress */}
-                <circle
-                    cx="60"
-                    cy="60"
-                    r={r}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={`${dash} ${circ - dash}`}
-                    style={{
-                        transition: 'stroke-dasharray 1s cubic-bezier(0.34,1.56,0.64,1)',
-                    }}
-                />
-            </svg>
-            {/* Center text */}
-            <Box
-                sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-            >
-                <Typography
-                    sx={{ fontWeight: 800, fontSize: '1.7rem', lineHeight: 1, color: '#0f172a', fontFamily: '"Syne", sans-serif' }}
-                >
-                    {score}
-                </Typography>
-                <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>
-                    de {total}
-                </Typography>
-            </Box>
-        </Box>
-    );
-}
 
 interface FinalScreenProps {
     score: number;
@@ -147,141 +21,202 @@ interface FinalScreenProps {
     onRestart: () => void;
 }
 
-export default function FinalScreen({ score, total, highScore, isNewRecord, onRestart }: Readonly<FinalScreenProps>) {
+export default function FinalScreen({
+    score,
+    total,
+    highScore,
+    isNewRecord,
+    onRestart,
+}: Readonly<FinalScreenProps>) {
     const headingRef = useRef<HTMLHeadingElement | null>(null);
     useEffect(() => { headingRef.current?.focus(); }, []);
 
     const rating = getRating(score, total);
     const pct = Math.round((score / total) * 100);
+    const errors = total - score;
 
     return (
         <Box
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2.5,
-                py: 1,
-                animation: 'popIn 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+                pt: 3, pb: 2,
+                animation: 'popIn 0.45s cubic-bezier(0.34,1.56,0.64,1)',
                 '@keyframes popIn': {
-                    from: { opacity: 0, transform: 'scale(0.88)' },
+                    from: { opacity: 0, transform: 'scale(0.92)' },
                     to: { opacity: 1, transform: 'scale(1)' },
                 },
             }}
         >
-            {/* Emoji + label */}
-            <Box sx={{ textAlign: 'center' }}>
-                <Box
-                    sx={{
-                        fontSize: '3.5rem',
-                        lineHeight: 1,
-                        mb: 1,
-                        display: 'inline-block',
-                        animation: 'bounce 0.6s 0.2s cubic-bezier(0.34,1.56,0.64,1) both, float 3s 0.8s ease-in-out infinite',
-                        '@keyframes bounce': {
-                            from: { transform: 'scale(0.5)', opacity: 0 },
-                            to: { transform: 'scale(1)', opacity: 1 },
-                        },
-                        '@keyframes float': {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-8px)' },
-                        },
-                    }}
-                >
-                    {rating.emoji}
-                </Box>
+            {/* ── Label row ── */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Typography
-                    variant="h4"
-                    tabIndex={-1}
-                    ref={headingRef}
                     sx={{
-                        fontWeight: 800,
-                        color: rating.color,
-                        fontFamily: '"Syne", sans-serif',
-                        letterSpacing: '-0.02em',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: 'text.secondary',
                     }}
                 >
-                    {rating.label}
+                    Resultado
                 </Typography>
             </Box>
 
-            {/* Score card with ring + confetti */}
-            <Box
-                sx={{
-                    position: 'relative',
-                    width: '100%',
-                    borderRadius: '20px',
-                    bgcolor: rating.bg,
-                    p: 2.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2.5,
-                    overflow: 'hidden',
-                }}
-            >
-                {isNewRecord && <Confetti />}
-
-                <ScoreRing score={score} total={total} color={rating.color} />
-
-                <Box sx={{ flex: 1, textAlign: 'left' }}>
+            {/* ── Big score number ── */}
+            <Box sx={{ mb: 3 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 0,
+                    }}
+                >
                     <Typography
-                        variant="body2"
-                        sx={{ color: '#64748b', fontWeight: 600, mb: 0.5, fontSize: '0.8rem' }}
+                        variant="h1"
+                        component="p"
+                        ref={headingRef}
+                        tabIndex={-1}
+                        sx={{
+                            fontFamily: '"Syne", sans-serif',
+                            fontWeight: 800,
+                            fontSize: { xs: '5.5rem', sm: '7rem' },
+                            lineHeight: 0.9,
+                            letterSpacing: '-0.04em',
+                            color: rating.color,
+                            fontVariantNumeric: 'tabular-nums',
+                        }}
                     >
-                        Sua pontuação
+                        {pct}
                     </Typography>
                     <Typography
                         sx={{
-                            fontWeight: 800,
-                            fontSize: '2.5rem',
-                            lineHeight: 1,
-                            color: rating.color,
                             fontFamily: '"Syne", sans-serif',
+                            fontWeight: 800,
+                            fontSize: { xs: '2rem', sm: '2.5rem' },
+                            color: rating.color,
+                            opacity: 0.6,
+                            mt: '0.15em',
+                            letterSpacing: '-0.03em',
                         }}
                     >
-                        {pct}%
+                        %
+                    </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1.5 }}>
+                    <Typography
+                        sx={{
+                            fontSize: '1.35rem',
+                            lineHeight: 1,
+                            animation: 'floatEmoji 3s ease-in-out infinite',
+                            '@keyframes floatEmoji': {
+                                '0%,100%': { transform: 'translateY(0)' },
+                                '50%': { transform: 'translateY(-5px)' },
+                            },
+                        }}
+                    >
+                        {rating.emoji}
                     </Typography>
                     <Typography
-                        variant="body2"
-                        sx={{ color: '#64748b', fontWeight: 500, mt: 0.5, fontSize: '0.8rem' }}
+                        variant="h5"
+                        sx={{
+                            fontWeight: 700,
+                            color: '#111',
+                            letterSpacing: '-0.025em',
+                        }}
                     >
-                        {score === total
-                            ? 'Acerto total!'
-                            : formatErrors(total - score)}
+                        {rating.label}
                     </Typography>
                 </Box>
             </Box>
 
-            {/* High score row */}
+            {/* ── Stats row ── */}
             <Box
                 sx={{
-                    width: '100%',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1px 1fr',
+                    bgcolor: '#ffffff',
+                    borderRadius: '14px',
+                    border: '1.5px solid #e5e5e3',
+                    overflow: 'hidden',
+                    mb: 2,
+                }}
+            >
+                <Box sx={{ p: 2, textAlign: 'center' }}>
+                    <Typography
+                        sx={{
+                            fontFamily: '"Syne", sans-serif',
+                            fontWeight: 800,
+                            fontSize: '2rem',
+                            letterSpacing: '-0.04em',
+                            color: '#111',
+                            lineHeight: 1,
+                            fontVariantNumeric: 'tabular-nums',
+                        }}
+                    >
+                        {score}/{total}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600, mt: 0.5, letterSpacing: '-0.01em' }}>
+                        acertos
+                    </Typography>
+                </Box>
+
+                {/* Divider column */}
+                <Box sx={{ bgcolor: '#e5e5e3' }} />
+
+                <Box sx={{ p: 2, textAlign: 'center' }}>
+                    <Typography
+                        sx={{
+                            fontFamily: '"Syne", sans-serif',
+                            fontWeight: 800,
+                            fontSize: '2rem',
+                            letterSpacing: '-0.04em',
+                            color: errors === 0 ? '#16a34a' : '#dc2626',
+                            lineHeight: 1,
+                            fontVariantNumeric: 'tabular-nums',
+                        }}
+                    >
+                        {errors}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 600, mt: 0.5, letterSpacing: '-0.01em' }}>
+                        {errors === 1 ? 'erro' : 'erros'}
+                    </Typography>
+                </Box>
+            </Box>
+
+            {/* ── High score ── */}
+            <Box
+                sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    borderRadius: '14px',
+                    py: 1.75,
                     px: 2,
-                    py: 1.5,
+                    borderRadius: '12px',
+                    bgcolor: isNewRecord ? '#fffbeb' : '#f7f6f3',
                     border: '1.5px solid',
-                    bgcolor: isNewRecord ? '#fef9c3' : '#f8fafc',
-                    borderColor: isNewRecord ? '#fde68a' : '#e2e8f0',
+                    borderColor: isNewRecord ? '#fde68a' : '#e5e5e3',
+                    mb: 3,
                     transition: 'all 0.3s ease',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmojiEventsIcon sx={{ color: '#f59e0b', fontSize: 20 }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', fontSize: '0.85rem' }}>
+                    <EmojiEventsIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+                    <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'text.secondary', letterSpacing: '-0.01em' }}>
                         Melhor pontuação
                     </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                     <Typography
                         sx={{
-                            fontWeight: 800,
-                            fontSize: '1.1rem',
-                            color: isNewRecord ? '#92400e' : '#5c67f2',
                             fontFamily: '"Syne", sans-serif',
+                            fontWeight: 800,
+                            fontSize: '1.05rem',
+                            color: isNewRecord ? '#92400e' : '#111',
+                            letterSpacing: '-0.03em',
+                            fontVariantNumeric: 'tabular-nums',
                         }}
                     >
                         {highScore}
@@ -289,22 +224,19 @@ export default function FinalScreen({ score, total, highScore, isNewRecord, onRe
                     {isNewRecord && (
                         <Box
                             sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.3,
+                                display: 'flex', alignItems: 'center', gap: 0.25,
                                 bgcolor: '#fde68a',
-                                borderRadius: '8px',
-                                px: 0.8,
-                                py: 0.2,
-                                animation: 'pop 0.4s 0.3s cubic-bezier(0.34,1.56,0.64,1) both',
+                                borderRadius: '6px',
+                                px: 0.75, py: 0.2,
+                                animation: 'pop 0.4s 0.25s cubic-bezier(0.34,1.56,0.64,1) both',
                                 '@keyframes pop': {
-                                    from: { transform: 'scale(0)' },
-                                    to: { transform: 'scale(1)' },
+                                    from: { transform: 'scale(0)', opacity: 0 },
+                                    to: { transform: 'scale(1)', opacity: 1 },
                                 },
                             }}
                         >
-                            <StarIcon sx={{ fontSize: 13, color: '#92400e' }} />
-                            <Typography variant="caption" sx={{ color: '#92400e', fontWeight: 800, fontSize: '0.7rem' }}>
+                            <StarIcon sx={{ fontSize: 11, color: '#92400e' }} />
+                            <Typography variant="caption" sx={{ color: '#92400e', fontWeight: 800, fontSize: '0.68rem' }}>
                                 Novo!
                             </Typography>
                         </Box>
@@ -312,7 +244,9 @@ export default function FinalScreen({ score, total, highScore, isNewRecord, onRe
                 </Box>
             </Box>
 
-            {/* Restart */}
+            <Divider sx={{ mb: 3, borderColor: '#e5e5e3' }} />
+
+            {/* ── CTA ── */}
             <Button
                 variant="contained"
                 fullWidth
@@ -321,13 +255,13 @@ export default function FinalScreen({ score, total, highScore, isNewRecord, onRe
                 onClick={onRestart}
                 disableElevation
                 sx={{
-                    py: 1.6,
-                    fontSize: '0.95rem',
+                    py: 1.65,
+                    fontSize: '0.9rem',
                     fontWeight: 700,
-                    borderRadius: '14px',
-                    bgcolor: '#5c67f2',
-                    mt: 0.5,
-                    '&:hover': { bgcolor: '#4a53d4' },
+                    borderRadius: '12px',
+                    bgcolor: '#111',
+                    letterSpacing: '-0.02em',
+                    '&:hover': { bgcolor: '#1f1f1f' },
                 }}
             >
                 Jogar novamente

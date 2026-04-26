@@ -1,71 +1,24 @@
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import {
-    Box,
-    Button,
-    Collapse,
-    Typography,
-} from '@mui/material';
+import { Box, Button, Collapse, Typography } from '@mui/material';
 import { useEffect, useRef } from 'react';
 
 const LABELS = ['A', 'B', 'C', 'D'];
 
-interface ChoiceStyle {
-    bgcolor: string;
-    borderColor: string;
-    color: string;
-    labelBg: string;
-    labelColor: string;
-    opacity?: number;
-    animation?: string;
-    '&:hover'?: Record<string, string | number>;
-}
+type ChoiceState = 'idle' | 'correct' | 'wrong' | 'dimmed';
 
-function getLabelIcon(state: 'idle' | 'correct' | 'wrong' | 'dimmed', idx: number) {
-    if (state === 'correct') return <CheckIcon sx={{ fontSize: 16 }} />;
-    if (state === 'wrong') return <CloseIcon sx={{ fontSize: 16 }} />;
-    return LABELS[idx];
+function getChoiceState(
+    idx: number,
+    answered: boolean,
+    chosenIdx: number | null,
+    correctIdx: number,
+): ChoiceState {
+    if (!answered) return 'idle';
+    if (idx === correctIdx) return 'correct';
+    if (idx === chosenIdx) return 'wrong';
+    return 'dimmed';
 }
-
-const stateStyles: Record<'idle' | 'correct' | 'wrong' | 'dimmed', ChoiceStyle> = {
-    idle: {
-        bgcolor: '#ffffff',
-        borderColor: '#e2e8f0',
-        color: '#334155',
-        labelBg: '#f1f5f9',
-        labelColor: '#64748b',
-        '&:hover': {
-            borderColor: '#a5b4fc',
-            bgcolor: '#f8faff',
-            transform: 'translateX(2px)',
-        },
-    },
-    correct: {
-        bgcolor: '#f0fdf4',
-        borderColor: '#86efac',
-        color: '#14532d',
-        labelBg: '#22c55e',
-        labelColor: '#ffffff',
-    },
-    wrong: {
-        bgcolor: '#fef2f2',
-        borderColor: '#fca5a5',
-        color: '#7f1d1d',
-        labelBg: '#ef4444',
-        labelColor: '#ffffff',
-        animation: 'shake 0.35s ease',
-    },
-    dimmed: {
-        bgcolor: '#f8fafc',
-        borderColor: '#f1f5f9',
-        color: '#94a3b8',
-        labelBg: '#e2e8f0',
-        labelColor: '#94a3b8',
-        opacity: 0.55,
-    },
-};
 
 type Question = {
     question?: string;
@@ -95,7 +48,6 @@ export default function QuestionScreen({
     question,
     current,
     total,
-    score,
     answered,
     chosenIdx,
     correctIdx,
@@ -106,7 +58,7 @@ export default function QuestionScreen({
 }: Readonly<QuestionScreenProps>) {
     const headingRef = useRef<HTMLHeadingElement | null>(null);
 
-    // Keyboard shortcut: 1-4
+    // Keyboard 1–4
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if (answered) return;
@@ -130,116 +82,133 @@ export default function QuestionScreen({
     const isLast = current === total - 1;
     const isCorrectAnswer = chosenIdx === correctIdx;
 
-    const getChoiceState = (idx: number) => {
-        if (!answered) return 'idle';
-        if (idx === correctIdx) return 'correct';
-        if (idx === chosenIdx && idx !== correctIdx) return 'wrong';
-        return 'dimmed';
-    };
-
-    // Segmented progress dots — objects with stable key (question position)
-    const segments = Array.from({ length: total }, (_, i) => {
-        const state =
-            i < current ? 'done'
-                : i === current ? (answered ? 'current-answered' : 'current')
-                    : 'pending';
-        return { key: `q${i}`, state };
-    });
-
     return (
         <Box
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 2.5,
-                animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)',
-                '@keyframes slideUp': {
-                    from: { opacity: 0, transform: 'translateY(12px)' },
+                flex: 1,
+                gap: 0,
+                pt: 3,
+                animation: 'slideIn 0.28s cubic-bezier(0.16,1,0.3,1)',
+                '@keyframes slideIn': {
+                    from: { opacity: 0, transform: 'translateY(10px)' },
                     to: { opacity: 1, transform: 'translateY(0)' },
                 },
             }}
         >
-            {/* Header: segmented progress + score */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {/* Segmented dots */}
-                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, alignItems: 'center' }}>
-                    {segments.map(({ key, state }) => {
-                        const SEG_COLOR: Record<string, string> = {
-                            pending: '#e2e8f0',
-                            current: '#c7d2fe',
-                        };
-                        const segBgcolor = SEG_COLOR[state] ?? '#5c67f2';
-                        return (
-                            <Box
-                                key={key}
-                                sx={{
-                                    flex: 1,
-                                    height: 5,
-                                    borderRadius: 999,
-                                    transition: 'all 0.35s ease',
-                                    bgcolor: segBgcolor,
-                                    animation:
-                                        state === 'current'
-                                            ? 'pulse 1.5s ease infinite'
-                                            : 'none',
-                                    '@keyframes pulse': {
-                                        '0%, 100%': { opacity: 1 },
-                                        '50%': { opacity: 0.5 },
-                                    },
-                                }}
-                            />
-                        );
-                    })}
-                </Box>
-
-                {/* Counter badge */}
+            {/* ── Meta row: counter + ghost number ── */}
+            <Box sx={{ position: 'relative', mb: 3 }}>
+                {/* Decorative large ghost number – editorial backdrop */}
                 <Typography
-                    variant="caption"
+                    aria-hidden="true"
                     sx={{
-                        fontWeight: 700,
-                        color: '#5c67f2',
-                        bgcolor: '#eef0fd',
-                        px: 1,
-                        py: 0.3,
-                        borderRadius: '8px',
-                        fontSize: '0.75rem',
-                        flexShrink: 0,
+                        position: 'absolute',
+                        top: '-0.35em',
+                        right: '-0.1em',
                         fontFamily: '"Syne", sans-serif',
+                        fontWeight: 800,
+                        fontSize: { xs: '8rem', sm: '10rem' },
+                        lineHeight: 1,
+                        color: '#111',
+                        opacity: 0.035,
+                        userSelect: 'none',
+                        pointerEvents: 'none',
+                        letterSpacing: '-0.04em',
                     }}
                 >
-                    {current + 1}/{total}
+                    {String(current + 1).padStart(2, '0')}
                 </Typography>
 
-                {/* Score */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4, flexShrink: 0 }}>
-                    <EmojiEventsIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
-                    <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#64748b' }}>
-                        {score}
+                {/* Counter pill */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                        sx={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: 'text.secondary',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                        }}
+                    >
+                        Questão
+                    </Typography>
+                    <Typography
+                        sx={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: '#5c67f2',
+                            letterSpacing: '0.04em',
+                            fontVariantNumeric: 'tabular-nums',
+                        }}
+                    >
+                        {current + 1}/{total}
                     </Typography>
                 </Box>
             </Box>
 
-            {/* Question text */}
+            {/* ── Question text ── */}
             <Typography
-                variant="h6"
+                variant="h5"
+                component="h2"
                 tabIndex={-1}
                 ref={headingRef}
                 sx={{
                     fontWeight: 700,
-                    lineHeight: 1.5,
-                    color: '#0f172a',
-                    letterSpacing: '-0.01em',
-                    fontSize: { xs: '1.05rem', sm: '1.2rem' },
+                    color: '#111',
+                    lineHeight: 1.45,
+                    mb: 4,
+                    fontSize: { xs: '1.15rem', sm: '1.3rem' },
+                    letterSpacing: '-0.02em',
                 }}
             >
                 {question.question}
             </Typography>
 
-            {/* Choices */}
+            {/* ── Choices ── */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {(question.choices ?? []).map((text: string, idx: number) => {
-                    const state = getChoiceState(idx);
-                    const s = stateStyles[state];
+                    const state = getChoiceState(idx, answered, chosenIdx, correctIdx);
+
+                    const styles = {
+                        idle: {
+                            bg: '#ffffff',
+                            border: '#e5e5e3',
+                            color: '#111',
+                            labelBg: '#f5f4f1',
+                            labelColor: '#737373',
+                            hover: { bgcolor: '#f5f4f1', borderColor: '#c7c7c5' },
+                        },
+                        correct: {
+                            bg: '#f0fdf4',
+                            border: '#86efac',
+                            color: '#14532d',
+                            labelBg: '#16a34a',
+                            labelColor: '#fff',
+                            hover: {},
+                        },
+                        wrong: {
+                            bg: '#fef2f2',
+                            border: '#fca5a5',
+                            color: '#7f1d1d',
+                            labelBg: '#dc2626',
+                            labelColor: '#fff',
+                            hover: {},
+                        },
+                        dimmed: {
+                            bg: '#ffffff',
+                            border: '#ededea',
+                            color: '#a3a3a3',
+                            labelBg: '#f5f4f1',
+                            labelColor: '#c3c3c1',
+                            hover: {},
+                        },
+                    }[state];
+
+                    const labelContent =
+                        state === 'correct' ? <CheckIcon sx={{ fontSize: 14 }} />
+                            : state === 'wrong' ? <CloseIcon sx={{ fontSize: 14 }} />
+                                : LABELS[idx];
 
                     return (
                         <Button
@@ -253,104 +222,93 @@ export default function QuestionScreen({
                                 alignItems: 'center',
                                 justifyContent: 'flex-start',
                                 textAlign: 'left',
-                                p: '11px 14px',
+                                py: '13px',
+                                px: 2,
                                 gap: 1.5,
+                                borderRadius: '12px',
                                 textTransform: 'none',
-                                borderRadius: '14px',
-                                fontWeight: 500,
                                 fontSize: '0.9rem',
-                                lineHeight: 1.45,
+                                fontWeight: 500,
+                                lineHeight: 1.5,
+                                letterSpacing: '-0.01em',
                                 border: '1.5px solid',
-                                transition: 'all 0.18s ease',
+                                transition: 'all 0.15s ease',
                                 cursor: answered ? 'default' : 'pointer',
-                                bgcolor: s.bgcolor,
-                                borderColor: s.borderColor,
-                                color: s.color,
-                                opacity: s.opacity ?? 1,
-                                animation: s.animation,
+                                bgcolor: styles.bg,
+                                borderColor: styles.border,
+                                color: styles.color,
+                                opacity: state === 'dimmed' ? 0.5 : 1,
+                                animation: state === 'wrong' ? 'shake 0.35s ease' : 'none',
                                 '@keyframes shake': {
-                                    '0%, 100%': { transform: 'translateX(0)' },
-                                    '20%': { transform: 'translateX(-5px)' },
+                                    '0%,100%': { transform: 'translateX(0)' },
+                                    '20%': { transform: 'translateX(-6px)' },
                                     '60%': { transform: 'translateX(5px)' },
                                 },
-                                '&:hover': answered ? {} : (s['&:hover'] ?? {}),
+                                '&:hover': answered ? {} : styles.hover,
                                 '&.Mui-disabled': {
-                                    bgcolor: s.bgcolor,
-                                    borderColor: s.borderColor,
-                                    color: s.color,
-                                    opacity: s.opacity ?? 1,
+                                    bgcolor: styles.bg,
+                                    borderColor: styles.border,
+                                    color: styles.color,
+                                    opacity: state === 'dimmed' ? 0.5 : 1,
                                 },
                             }}
                         >
                             {/* Label badge */}
                             <Box
                                 sx={{
-                                    width: 30,
-                                    height: 30,
-                                    borderRadius: '9px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
+                                    width: 28, height: 28,
+                                    borderRadius: '8px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     flexShrink: 0,
                                     fontFamily: '"Syne", sans-serif',
                                     fontWeight: 700,
-                                    fontSize: '0.8rem',
-                                    transition: 'all 0.18s ease',
-                                    bgcolor: s.labelBg,
-                                    color: s.labelColor,
+                                    fontSize: '0.75rem',
+                                    transition: 'all 0.15s ease',
+                                    bgcolor: styles.labelBg,
+                                    color: styles.labelColor,
                                 }}
                             >
-                                {getLabelIcon(state, idx)}
+                                {labelContent}
                             </Box>
-
                             <Box component="span" sx={{ flex: 1 }}>{text}</Box>
                         </Button>
                     );
                 })}
             </Box>
 
-            {/* Explanation */}
-            <Collapse in={answered} timeout={250}>
+            {/* ── Explanation ── */}
+            <Collapse in={answered} timeout={220}>
                 <Box
                     aria-live="polite"
                     sx={{
-                        borderRadius: '14px',
+                        mt: 2,
                         p: '14px 16px',
-                        bgcolor: isCorrectAnswer ? '#f0fdf4' : '#fff7ed',
+                        borderRadius: '12px',
+                        bgcolor: isCorrectAnswer ? '#f0fdf4' : '#fef2f2',
                         borderLeft: '3px solid',
-                        borderColor: isCorrectAnswer ? '#22c55e' : '#f97316',
-                        mt: -0.5,
+                        borderColor: isCorrectAnswer ? '#16a34a' : '#dc2626',
                     }}
                 >
                     <Typography
                         variant="body2"
                         sx={{
-                            color: isCorrectAnswer ? '#166534' : '#7c2d12',
-                            fontWeight: 500,
+                            color: isCorrectAnswer ? '#14532d' : '#7f1d1d',
                             lineHeight: 1.65,
+                            fontWeight: 500,
                             mb: 1.5,
                         }}
                     >
-                        {question.explanation ||
-                            (isCorrectAnswer
-                                ? '✅ Correto! Excelente.'
-                                : `❌ Correto: ${question.choices?.[correctIdx]}`)}
+                        {question.explanation ??
+                            (isCorrectAnswer ? '✅ Correto! Excelente.' : `❌ A resposta correta era: ${question.choices?.[correctIdx]}`)}
                     </Typography>
 
-                    {/* Auto-advance countdown bar */}
-                    <Box
-                        sx={{
-                            height: 3,
-                            borderRadius: 999,
-                            bgcolor: isCorrectAnswer ? 'rgba(34,197,94,0.2)' : 'rgba(249,115,22,0.15)',
-                            overflow: 'hidden',
-                        }}
-                    >
+                    {/* Countdown bar */}
+                    <Box sx={{ height: 2, borderRadius: 999, bgcolor: 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
                         <Box
                             sx={{
                                 height: '100%',
                                 borderRadius: 999,
-                                bgcolor: isCorrectAnswer ? '#22c55e' : '#f97316',
+                                bgcolor: isCorrectAnswer ? '#16a34a' : '#dc2626',
                                 width: `${autoAdvanceProgress}%`,
                                 transition: 'width 0.1s linear',
                             }}
@@ -359,32 +317,31 @@ export default function QuestionScreen({
                 </Box>
             </Collapse>
 
-            {/* Next button */}
+            {/* ── Next button ── */}
             <Button
                 variant="contained"
                 fullWidth
                 disableElevation
                 disabled={!answered}
                 onClick={onNext}
-                endIcon={<ArrowForwardIcon />}
+                endIcon={<ArrowForwardIcon sx={{ fontSize: '1rem !important' }} />}
                 sx={{
-                    mt: 'auto',
-                    py: 1.5,
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderRadius: '14px',
-                    bgcolor: '#5c67f2',
-                    color: '#ffffff',
+                    mt: 2.5,
+                    py: 1.6,
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    borderRadius: '12px',
+                    bgcolor: '#111',
+                    color: '#fff',
                     opacity: answered ? 1 : 0,
-                    transform: answered ? 'translateY(0) scale(1)' : 'translateY(6px) scale(0.98)',
+                    transform: answered ? 'translateY(0)' : 'translateY(8px)',
                     transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
                     pointerEvents: answered ? 'auto' : 'none',
-                    '&:hover': { bgcolor: '#4a53d4' },
-                    '&.Mui-disabled': { bgcolor: '#e2e8f0', color: '#fff' },
+                    '&:hover': { bgcolor: '#1f1f1f' },
+                    '&.Mui-disabled': { bgcolor: '#e5e5e3', color: '#fff' },
                 }}
             >
-                {isLast ? 'Ver resultado' : 'Próxima'}
+                {isLast ? 'Ver resultado' : 'Próxima questão'}
             </Button>
         </Box>
     );

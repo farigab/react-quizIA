@@ -42,7 +42,7 @@ const safeStorage = {
 };
 
 export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreenProps>) {
-    const [selected, setSelected] = useState<string | null>(() => safeStorage.get(STORAGE_KEY) || null);
+    const [selected, setSelected] = useState<string | null>(() => safeStorage.get(STORAGE_KEY));
     const initialCustom = (() => {
         const stored = safeStorage.get(STORAGE_KEY);
         return stored && !THEMES.some(t => t.label === stored) ? stored : '';
@@ -79,7 +79,7 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
             setSelected(rand.label);
             safeStorage.set(STORAGE_KEY, rand.label);
             onStart(rand.label);
-        }, 600);
+        }, 550);
     };
 
     return (
@@ -87,28 +87,44 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 2,
+                gap: 0,
+                animation: 'fadeUp 0.35s cubic-bezier(0.16,1,0.3,1)',
+                '@keyframes fadeUp': {
+                    from: { opacity: 0, transform: 'translateY(12px)' },
+                    to: { opacity: 1, transform: 'translateY(0)' },
+                },
             }}
         >
-            <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', mb: 0.5, fontWeight: 500 }}
-            >
-                Escolha um tema para começar
-            </Typography>
+            {/* ── Hero heading ── */}
+            <Box sx={{ pt: 3, pb: 4 }}>
+                <Typography
+                    variant="h3"
+                    sx={{
+                        fontWeight: 800,
+                        color: '#111',
+                        letterSpacing: '-0.03em',
+                        mb: 0.75,
+                        lineHeight: 1.1,
+                    }}
+                >
+                    Escolha um tema
+                </Typography>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem', fontWeight: 500 }}>
+                    10 questões geradas por IA em segundos.
+                </Typography>
+            </Box>
 
             {loadError && (
-                <Alert severity="error" sx={{ borderRadius: 2 }}>
-                    {loadError}
-                </Alert>
+                <Alert severity="error" sx={{ mb: 2.5, borderRadius: '10px' }}>{loadError}</Alert>
             )}
 
-            {/* Theme grid */}
+            {/* ── Theme grid ── */}
             <Box
                 sx={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, 1fr)',
                     gap: 1,
+                    mb: 3,
                 }}
             >
                 {THEMES.map(({ label, emoji }, i) => {
@@ -124,95 +140,92 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'flex-start',
-                                gap: 1.2,
-                                py: 1.3,
-                                px: 1.6,
-                                borderRadius: '14px',
+                                gap: 1.25,
+                                py: '11px',
+                                px: 1.75,
+                                borderRadius: '10px',
                                 textTransform: 'none',
                                 fontSize: '0.875rem',
                                 fontWeight: isActive ? 700 : 500,
+                                letterSpacing: '-0.01em',
                                 border: '1.5px solid',
-                                borderColor: isActive ? '#5c67f2' : '#e2e8f0',
-                                bgcolor: isActive ? '#eef0fd' : '#ffffff',
-                                color: isActive ? '#4a53d4' : '#334155',
-                                transition: 'all 0.18s ease',
-                                boxShadow: isActive
-                                    ? '0 0 0 3px rgba(92, 103, 242, 0.12)'
-                                    : 'none',
-                                animation: `fadeSlideIn 0.3s ease both`,
-                                animationDelay: `${i * 35}ms`,
-                                '@keyframes fadeSlideIn': {
-                                    from: { opacity: 0, transform: 'translateY(6px)' },
-                                    to: { opacity: 1, transform: 'translateY(0)' },
-                                },
+                                borderColor: isActive ? '#111' : '#e5e5e3',
+                                bgcolor: isActive ? '#111' : '#ffffff',
+                                color: isActive ? '#fff' : '#111',
+                                transition: 'all 0.15s ease',
+                                animation: `fadeUp 0.3s ${i * 30}ms ease both`,
                                 '&:hover': {
-                                    borderColor: isActive ? '#5c67f2' : '#c7d2fe',
-                                    bgcolor: isActive ? '#eef0fd' : '#f5f7ff',
-                                    color: isActive ? '#4a53d4' : '#4f46e5',
+                                    borderColor: '#111',
+                                    bgcolor: isActive ? '#111' : '#f5f4f1',
+                                    color: isActive ? '#fff' : '#111',
                                 },
                             }}
                         >
                             <Box
                                 component="span"
                                 sx={{
-                                    fontSize: '1.15rem',
-                                    lineHeight: 1,
-                                    flexShrink: 0,
-                                    // Slight scale on active
-                                    transform: isActive ? 'scale(1.15)' : 'scale(1)',
-                                    transition: 'transform 0.18s ease',
+                                    fontSize: '1.05rem', lineHeight: 1, flexShrink: 0,
+                                    filter: isActive ? 'brightness(1.2)' : 'none',
+                                    transition: 'filter 0.15s ease',
                                 }}
                             >
                                 {emoji}
                             </Box>
-                            <Box component="span">{label}</Box>
+                            {label}
                         </Button>
                     );
                 })}
             </Box>
 
-            {/* Dice button */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.5 }}>
-                <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
-                <IconButton
+            {/* ── Divider with dice ── */}
+            <Box
+                sx={{
+                    display: 'flex', alignItems: 'center', gap: 1.5,
+                    mb: 3,
+                    color: 'text.secondary',
+                }}
+            >
+                <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
+                <Button
                     onClick={handleDice}
                     disabled={rolling}
-                    aria-label="Sortear tema aleatório"
+                    startIcon={
+                        <CasinoIcon
+                            sx={{
+                                fontSize: '1rem !important',
+                                animation: rolling ? 'spinDice 0.55s ease' : 'none',
+                                '@keyframes spinDice': {
+                                    '0%': { transform: 'rotate(0deg) scale(1)' },
+                                    '50%': { transform: 'rotate(180deg) scale(1.25)' },
+                                    '100%': { transform: 'rotate(360deg) scale(1)' },
+                                },
+                            }}
+                        />
+                    }
                     size="small"
                     sx={{
-                        border: '1.5px dashed #a5b4fc',
-                        bgcolor: '#ffffff',
-                        color: '#5c67f2',
-                        width: 36,
-                        height: 36,
-                        '&:hover': { bgcolor: '#f5f7ff', borderStyle: 'solid' },
-                        '&:disabled': { opacity: 0.6 },
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.78rem',
+                        letterSpacing: '-0.01em',
+                        color: 'text.secondary',
+                        border: '1.5px dashed',
+                        borderColor: 'divider',
+                        borderRadius: '8px',
+                        px: 1.5, py: 0.5,
+                        minHeight: 0,
+                        bgcolor: '#fff',
+                        '&:hover': { borderStyle: 'solid', borderColor: '#aaa', color: '#111', bgcolor: '#fff' },
+                        '&:disabled': { opacity: 0.5 },
                     }}
                 >
-                    <CasinoIcon
-                        sx={{
-                            fontSize: 18,
-                            animation: rolling ? 'spin 0.6s ease' : 'none',
-                            '@keyframes spin': {
-                                '0%': { transform: 'rotate(0deg) scale(1)' },
-                                '50%': { transform: 'rotate(180deg) scale(1.2)' },
-                                '100%': { transform: 'rotate(360deg) scale(1)' },
-                            },
-                        }}
-                    />
-                </IconButton>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                    tema aleatório
-                </Typography>
-                <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
+                    Sortear tema
+                </Button>
+                <Box sx={{ flex: 1, height: '1px', bgcolor: 'divider' }} />
             </Box>
 
-            {/* Custom theme input */}
-            <Box
-                component="form"
-                onSubmit={handleCustomStart}
-                sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}
-            >
+            {/* ── Custom theme input ── */}
+            <Box component="form" onSubmit={handleCustomStart}>
                 <TextField
                     fullWidth
                     size="small"
@@ -228,15 +241,14 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
                                         type="submit"
                                         size="small"
                                         sx={{
-                                            bgcolor: '#5c67f2',
+                                            bgcolor: '#111',
                                             color: '#fff',
-                                            width: 28,
-                                            height: 28,
-                                            borderRadius: '8px',
-                                            '&:hover': { bgcolor: '#4a53d4' },
+                                            width: 26, height: 26,
+                                            borderRadius: '7px',
+                                            '&:hover': { bgcolor: '#333' },
                                         }}
                                     >
-                                        <EastIcon sx={{ fontSize: 15 }} />
+                                        <EastIcon sx={{ fontSize: 13 }} />
                                     </IconButton>
                                 </InputAdornment>
                             ) : null,
@@ -244,12 +256,11 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
                     }}
                     sx={{
                         '& .MuiOutlinedInput-root': {
-                            bgcolor: '#f8fafc',
-                            borderRadius: '14px',
                             fontSize: '0.875rem',
-                            '& fieldset': { borderColor: '#e2e8f0' },
-                            '&:hover fieldset': { borderColor: '#c7d2fe' },
-                            '&.Mui-focused fieldset': { borderColor: '#5c67f2', borderWidth: '1.5px' },
+                            fontWeight: 500,
+                            letterSpacing: '-0.01em',
+                            '& fieldset': { borderColor: '#e5e5e3' },
+                            '&:hover fieldset': { borderColor: '#aaa' },
                         },
                     }}
                 />
