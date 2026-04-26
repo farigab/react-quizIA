@@ -52,7 +52,7 @@ export default function QuestionScreen({
     onChoice,
     onNext,
     onAnswered,
-}: QuestionScreenProps) {
+}: Readonly<QuestionScreenProps>) {
     const headingRef = useRef<HTMLHeadingElement | null>(null);
     // Atalho de teclado: 1-4 seleciona a alternativa
     useEffect(() => {
@@ -63,8 +63,8 @@ export default function QuestionScreen({
                 onChoice(num);
             }
         };
-        window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
+        globalThis.addEventListener('keydown', handler);
+        return () => globalThis.removeEventListener('keydown', handler);
     }, [answered, question, onChoice]);
 
     useEffect(() => {
