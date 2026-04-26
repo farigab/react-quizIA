@@ -4,16 +4,17 @@
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #4f46e5;
+  /* alinhado com MUI primary.main */
+  --accent-bg: rgba(79, 70, 229, 0.08);
+  --accent-border: rgba(79, 70, 229, 0.4);
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'SF Mono', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', monospace;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --mono: 'SF Mono', 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', monospace;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -28,6 +29,52 @@
   @media (max-width: 1024px) {
     font-size: 16px;
   }
+}
+
+/* Skip-link for keyboard users */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 10000;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  left: 12px;
+  top: 12px;
+  width: auto;
+  height: auto;
+  padding: 8px 12px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+
+/* Accessible focus styles for controls and MUI components */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+.MuiButton-root:focus-visible,
+.MuiIconButton-root:focus-visible,
+.MuiChip-root:focus-visible,
+.MuiTextField-root:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.16);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* Ensure touch targets are comfortably large on mobile */
+.MuiButton-root,
+.MuiIconButton-root {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -76,20 +123,24 @@ h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
+
   @media (max-width: 1024px) {
     font-size: 36px;
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
+
   @media (max-width: 1024px) {
     font-size: 20px;
   }
 }
+
 p {
   margin: 0;
 }

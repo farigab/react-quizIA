@@ -1,13 +1,14 @@
-import {
-    Box,
-    Typography,
-    Button,
-    Divider,
-    LinearProgress,
-} from '@mui/material';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ReplayIcon from '@mui/icons-material/Replay';
 import StarIcon from '@mui/icons-material/Star';
+import {
+    Box,
+    Button,
+    Divider,
+    LinearProgress,
+    Typography,
+} from '@mui/material';
+import { useEffect, useRef } from 'react';
 
 const getRating = (score: number, total: number) => {
     const pct = (score / total) * 100;
@@ -27,6 +28,11 @@ interface FinalScreenProps {
 }
 
 export default function FinalScreen({ score, total, highScore, isNewRecord, onRestart }: FinalScreenProps) {
+    const headingRef = useRef<HTMLHeadingElement | null>(null);
+    useEffect(() => {
+        headingRef.current?.focus();
+    }, []);
+
     const rating = getRating(score, total);
     const pct = Math.round((score / total) * 100);
 
@@ -63,6 +69,8 @@ export default function FinalScreen({ score, total, highScore, isNewRecord, onRe
             {/* Rating label */}
             <Typography
                 variant="h4"
+                tabIndex={-1}
+                ref={headingRef}
                 sx={{
                     fontWeight: 800,
                     color: rating.color,
@@ -107,6 +115,11 @@ export default function FinalScreen({ score, total, highScore, isNewRecord, onRe
                     <LinearProgress
                         variant="determinate"
                         value={pct}
+                        aria-label="Progresso final"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={pct}
                         sx={{
                             height: 12,
                             borderRadius: 999,

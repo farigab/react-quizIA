@@ -1,23 +1,23 @@
-import {
-  ThemeProvider,
-  CssBaseline,
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Button,
-  Container,
-} from '@mui/material';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  CssBaseline,
+  ThemeProvider,
+  Typography,
+} from '@mui/material';
 
-import theme from './theme';
-import { useQuiz } from './hooks/useQuiz';
+import FinalScreen from './components/FinalScreen';
 import IntroScreen from './components/IntroScreen';
 import LoadingScreen from './components/LoadingScreen';
 import QuestionScreen from './components/QuestionScreen';
-import FinalScreen from './components/FinalScreen';
+import { useQuiz } from './hooks/useQuiz';
+import theme from './theme';
 
 // Fundo Mesh-gradient ajustado para ser ainda mais suave e clean
 const BgGradient = () => (
@@ -66,7 +66,9 @@ export default function App() {
       <CssBaseline />
       <BgGradient />
 
-      <Container
+      <a href="#main" className="skip-link">Pular para o conteúdo</a>
+
+      <Container component="main" id="main"
         maxWidth="sm"
         sx={{
           minHeight: '100vh',

@@ -10,7 +10,7 @@ import {
     LinearProgress,
     Typography,
 } from '@mui/material';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 const LABELS = ['A', 'B', 'C', 'D'];
 
@@ -53,6 +53,7 @@ export default function QuestionScreen({
     onNext,
     onAnswered,
 }: QuestionScreenProps) {
+    const headingRef = useRef<HTMLHeadingElement | null>(null);
     // Atalho de teclado: 1-4 seleciona a alternativa
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
@@ -69,6 +70,13 @@ export default function QuestionScreen({
     useEffect(() => {
         if (answered) onAnswered?.();
     }, [answered, onAnswered]);
+
+    // Move focus to the question heading when a new question is shown
+    useEffect(() => {
+        if (!answered) {
+            headingRef.current?.focus();
+        }
+    }, [current, answered]);
 
     if (!question) return null;
 
@@ -161,6 +169,11 @@ export default function QuestionScreen({
                     <LinearProgress
                         variant="determinate"
                         value={answered ? answeredProgressPct : progressPct}
+                        aria-label="Progresso do quiz"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(answered ? answeredProgressPct : progressPct)}
                         sx={{
                             height: 8,
                             borderRadius: 999,
@@ -186,6 +199,8 @@ export default function QuestionScreen({
             {/* Pergunta */}
             <Typography
                 variant="h6"
+                tabIndex={-1}
+                ref={headingRef}
                 sx={{
                     fontWeight: 700,
                     lineHeight: 1.45,
@@ -263,6 +278,7 @@ export default function QuestionScreen({
             {/* Explicação */}
             <Collapse in={answered} timeout={300}>
                 <Box
+                    aria-live="polite"
                     sx={{
                         bgcolor: isCorrectAnswer ? '#f0fdf4' : '#f8fafc',
                         border: '1px solid',

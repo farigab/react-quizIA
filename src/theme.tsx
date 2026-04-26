@@ -3,80 +3,60 @@ import { createTheme } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#4f46e5',
-      light: '#e0e7ff',
-      dark: '#4338ca',
+      main: '#5c67f2',        // alinhado com o #5c67f2 usado nos componentes
+      light: '#eef0fd',
+      dark: '#4a53d4',
       contrastText: '#ffffff',
     },
     success: {
-      main: '#10b981',
-      light: '#d1fae5',
+      main: '#639922',        // alinhado com o verde das opções corretas
+      light: '#eaf3de',
     },
     error: {
-      main: '#ef4444',
-      light: '#fee2e2',
+      main: '#A32D2D',        // alinhado com o vermelho das opções erradas
+      light: '#fcebeb',
     },
     background: {
-      default: '#f1f5f9',
+      default: '#f8fafc',
       paper: '#ffffff',
     },
     text: {
-      primary: '#111827',
-      secondary: '#6b7280',
+      primary: '#1e293b',     // alinhado com o #1e293b dos componentes
+      secondary: '#64748b',
     },
   },
   typography: {
-    fontFamily: '"DM Sans", system-ui, sans-serif',
-    h1: {
-      fontFamily: '"Syne", sans-serif',
-      fontWeight: 800,
-    },
-    h2: {
-      fontFamily: '"Syne", sans-serif',
-      fontWeight: 700,
-    },
-    h3: {
-      fontFamily: '"Syne", sans-serif',
-      fontWeight: 700,
-    },
-    h4: {
-      fontFamily: '"Syne", sans-serif',
-      fontWeight: 700,
-    },
-    h5: {
-      fontFamily: '"Syne", sans-serif',
-      fontWeight: 700,
-    },
-    h6: {
-      fontFamily: '"Syne", sans-serif',
-      fontWeight: 600,
-    },
+    fontFamily: '"Plus Jakarta Sans", sans-serif',
+    h1: { fontFamily: '"Syne", sans-serif', fontWeight: 800 },
+    h2: { fontFamily: '"Syne", sans-serif', fontWeight: 700 },
+    h3: { fontFamily: '"Syne", sans-serif', fontWeight: 700 },
+    h4: { fontFamily: '"Syne", sans-serif', fontWeight: 700 },
+    h5: { fontFamily: '"Syne", sans-serif', fontWeight: 700 },
+    h6: { fontFamily: '"Syne", sans-serif', fontWeight: 600 },
     button: {
-      fontFamily: '"Syne", sans-serif',
-      fontWeight: 700,
+      fontFamily: '"Plus Jakarta Sans", sans-serif',
+      fontWeight: 600,
       textTransform: 'none',
     },
   },
   shape: {
-    borderRadius: 14,
+    borderRadius: 12,         // alinhado com o border-radius dos componentes
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          padding: '12px 24px',
-          fontSize: '1rem',
-          fontWeight: 700,
+          padding: '13px 24px',
+          fontSize: '0.95rem',
+          fontWeight: 600,
           boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0 4px 14px rgba(79,70,229,0.25)',
-          },
+          '&:hover': { boxShadow: 'none' }, // removido — hover com sombra conflita com o estilo flat
         },
         contained: {
-          background: 'linear-gradient(135deg, #4f46e5, #6366f1)',
+          background: '#5c67f2',            // removido gradiente — flat é mais consistente
           '&:hover': {
-            background: 'linear-gradient(135deg, #4338ca, #4f46e5)',
+            background: '#4a53d4',
           },
         },
       },
@@ -84,9 +64,10 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          boxShadow: '0 20px 40px -8px rgba(17,24,39,0.10), 0 4px 10px -2px rgba(17,24,39,0.04)',
-          border: '1px solid rgba(255,255,255,0.8)',
+          boxShadow: 'none',                // removido — card usa border, não shadow
+          border: '0.5px solid #e2e8f0',
           borderRadius: 20,
+          background: '#ffffff',
         },
       },
     },
@@ -94,20 +75,21 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 999,
-          height: 10,
-          backgroundColor: '#e2e8f0',
+          height: 4,                        // reduzido de 10px → 4px, mais sutil
+          backgroundColor: '#f1f5f9',
         },
         bar: {
           borderRadius: 999,
-          background: 'linear-gradient(90deg, #4f46e5, #818cf8)',
+          background: '#5c67f2',            // removido gradiente — flat
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          fontFamily: '"Syne", sans-serif',
-          fontWeight: 700,
+          fontFamily: '"Plus Jakarta Sans", sans-serif', // trocado de Syne — Syne em chip fica pesado
+          fontWeight: 600,
+          fontSize: '0.78rem',
         },
       },
     },
@@ -117,7 +99,7 @@ const theme = createTheme({
           '& .MuiOutlinedInput-root': {
             borderRadius: 12,
             '&.Mui-focused fieldset': {
-              borderColor: '#4f46e5',
+              borderColor: '#5c67f2',
             },
           },
         },
@@ -125,9 +107,7 @@ const theme = createTheme({
     },
     MuiAlert: {
       styleOverrides: {
-        root: {
-          borderRadius: 12,
-        },
+        root: { borderRadius: 12 },
       },
     },
   },

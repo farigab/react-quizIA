@@ -124,6 +124,7 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
                                 disableElevation
                                 variant={isActive ? 'contained' : 'outlined'}
                                 onClick={() => handleThemeClick(theme)}
+                                aria-pressed={isActive}
                                 sx={{
                                     py: 1.2,
                                     borderRadius: '24px',
