@@ -1,18 +1,71 @@
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import {
     Box,
     Button,
-    Chip,
     Collapse,
-    LinearProgress,
     Typography,
 } from '@mui/material';
 import { useEffect, useRef } from 'react';
 
 const LABELS = ['A', 'B', 'C', 'D'];
+
+interface ChoiceStyle {
+    bgcolor: string;
+    borderColor: string;
+    color: string;
+    labelBg: string;
+    labelColor: string;
+    opacity?: number;
+    animation?: string;
+    '&:hover'?: Record<string, string | number>;
+}
+
+function getLabelIcon(state: 'idle' | 'correct' | 'wrong' | 'dimmed', idx: number) {
+    if (state === 'correct') return <CheckIcon sx={{ fontSize: 16 }} />;
+    if (state === 'wrong') return <CloseIcon sx={{ fontSize: 16 }} />;
+    return LABELS[idx];
+}
+
+const stateStyles: Record<'idle' | 'correct' | 'wrong' | 'dimmed', ChoiceStyle> = {
+    idle: {
+        bgcolor: '#ffffff',
+        borderColor: '#e2e8f0',
+        color: '#334155',
+        labelBg: '#f1f5f9',
+        labelColor: '#64748b',
+        '&:hover': {
+            borderColor: '#a5b4fc',
+            bgcolor: '#f8faff',
+            transform: 'translateX(2px)',
+        },
+    },
+    correct: {
+        bgcolor: '#f0fdf4',
+        borderColor: '#86efac',
+        color: '#14532d',
+        labelBg: '#22c55e',
+        labelColor: '#ffffff',
+    },
+    wrong: {
+        bgcolor: '#fef2f2',
+        borderColor: '#fca5a5',
+        color: '#7f1d1d',
+        labelBg: '#ef4444',
+        labelColor: '#ffffff',
+        animation: 'shake 0.35s ease',
+    },
+    dimmed: {
+        bgcolor: '#f8fafc',
+        borderColor: '#f1f5f9',
+        color: '#94a3b8',
+        labelBg: '#e2e8f0',
+        labelColor: '#94a3b8',
+        opacity: 0.55,
+    },
+};
 
 type Question = {
     question?: string;
@@ -46,22 +99,19 @@ export default function QuestionScreen({
     answered,
     chosenIdx,
     correctIdx,
-    progressPct,
-    answeredProgressPct,
     autoAdvanceProgress,
     onChoice,
     onNext,
     onAnswered,
 }: Readonly<QuestionScreenProps>) {
     const headingRef = useRef<HTMLHeadingElement | null>(null);
-    // Atalho de teclado: 1-4 seleciona a alternativa
+
+    // Keyboard shortcut: 1-4
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
             if (answered) return;
             const num = Number(e.key) - 1;
-            if (num >= 0 && num < (question?.choices?.length ?? 0)) {
-                onChoice(num);
-            }
+            if (num >= 0 && num < (question?.choices?.length ?? 0)) onChoice(num);
         };
         globalThis.addEventListener('keydown', handler);
         return () => globalThis.removeEventListener('keydown', handler);
@@ -71,16 +121,14 @@ export default function QuestionScreen({
         if (answered) onAnswered?.();
     }, [answered, onAnswered]);
 
-    // Move focus to the question heading when a new question is shown
     useEffect(() => {
-        if (!answered) {
-            headingRef.current?.focus();
-        }
+        if (!answered) headingRef.current?.focus();
     }, [current, answered]);
 
     if (!question) return null;
 
     const isLast = current === total - 1;
+    const isCorrectAnswer = chosenIdx === correctIdx;
 
     const getChoiceState = (idx: number) => {
         if (!answered) return 'idle';
@@ -89,53 +137,14 @@ export default function QuestionScreen({
         return 'dimmed';
     };
 
-    // Estilos limpos e flat para as alternativas
-    const choiceStyles = {
-        idle: {
-            bgcolor: '#ffffff',
-            border: '1.5px solid',
-            borderColor: '#e2e8f0',
-            color: '#334155',
-            '&:hover': {
-                borderColor: '#cbd5e1',
-                bgcolor: '#f8fafc',
-            },
-        },
-        correct: {
-            bgcolor: '#ecfdf5', // Fundo verde super suave
-            border: '1.5px solid',
-            borderColor: '#34d399',
-            color: '#065f46',
-        },
-        wrong: {
-            bgcolor: '#fef2f2', // Fundo vermelho super suave
-            border: '1.5px solid',
-            borderColor: '#f87171',
-            color: '#991b1b',
-            animation: 'shake 0.4s ease',
-            '@keyframes shake': {
-                '0%, 100%': { transform: 'translateX(0)' },
-                '25%': { transform: 'translateX(-4px)' },
-                '75%': { transform: 'translateX(4px)' },
-            },
-        },
-        dimmed: {
-            bgcolor: '#f8fafc',
-            border: '1.5px solid',
-            borderColor: 'transparent',
-            color: '#94a3b8',
-            opacity: 0.6,
-        },
-    };
-
-    const labelColors = {
-        idle: { bgcolor: '#f1f5f9', color: '#64748b' },
-        correct: { bgcolor: '#10b981', color: '#ffffff' },
-        wrong: { bgcolor: '#ef4444', color: '#ffffff' },
-        dimmed: { bgcolor: '#e2e8f0', color: '#94a3b8' },
-    };
-
-    const isCorrectAnswer = chosenIdx === correctIdx;
+    // Segmented progress dots — objects with stable key (question position)
+    const segments = Array.from({ length: total }, (_, i) => {
+        const state =
+            i < current ? 'done'
+                : i === current ? (answered ? 'current-answered' : 'current')
+                    : 'pending';
+        return { key: `q${i}`, state };
+    });
 
     return (
         <Box
@@ -143,82 +152,98 @@ export default function QuestionScreen({
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 2.5,
-                animation: 'slideUp 0.35s cubic-bezier(0.16,1,0.3,1)',
+                animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)',
                 '@keyframes slideUp': {
-                    from: { opacity: 0, transform: 'translateY(14px)' },
+                    from: { opacity: 0, transform: 'translateY(12px)' },
                     to: { opacity: 1, transform: 'translateY(0)' },
                 },
             }}
         >
-            {/* Linha de Progresso Superior */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Chip
-                    label={`${current + 1} / ${total}`}
-                    size="small"
-                    sx={{
-                        fontFamily: '"Syne", sans-serif',
-                        fontWeight: 700,
-                        fontSize: '0.8rem',
-                        bgcolor: '#f5f7ff',
-                        color: '#5c67f2',
-                        height: 26,
-                        borderRadius: '8px',
-                    }}
-                />
-                <Box sx={{ flex: 1 }}>
-                    <LinearProgress
-                        variant="determinate"
-                        value={answered ? answeredProgressPct : progressPct}
-                        aria-label="Progresso do quiz"
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={Math.round(answered ? answeredProgressPct : progressPct)}
-                        sx={{
-                            height: 8,
-                            borderRadius: 999,
-                            bgcolor: '#e2e8f0',
-                            '& .MuiLinearProgress-bar': {
-                                bgcolor: '#5c67f2',
-                                transition: 'transform 0.5s ease',
-                            }
-                        }}
-                    />
+            {/* Header: segmented progress + score */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                {/* Segmented dots */}
+                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, alignItems: 'center' }}>
+                    {segments.map(({ key, state }) => {
+                        const SEG_COLOR: Record<string, string> = {
+                            pending: '#e2e8f0',
+                            current: '#c7d2fe',
+                        };
+                        const segBgcolor = SEG_COLOR[state] ?? '#5c67f2';
+                        return (
+                            <Box
+                                key={key}
+                                sx={{
+                                    flex: 1,
+                                    height: 5,
+                                    borderRadius: 999,
+                                    transition: 'all 0.35s ease',
+                                    bgcolor: segBgcolor,
+                                    animation:
+                                        state === 'current'
+                                            ? 'pulse 1.5s ease infinite'
+                                            : 'none',
+                                    '@keyframes pulse': {
+                                        '0%, 100%': { opacity: 1 },
+                                        '50%': { opacity: 0.5 },
+                                    },
+                                }}
+                            />
+                        );
+                    })}
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <EmojiEventsIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
-                    <Typography
-                        variant="body2"
-                        sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.9rem' }}
-                    >
+
+                {/* Counter badge */}
+                <Typography
+                    variant="caption"
+                    sx={{
+                        fontWeight: 700,
+                        color: '#5c67f2',
+                        bgcolor: '#eef0fd',
+                        px: 1,
+                        py: 0.3,
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        flexShrink: 0,
+                        fontFamily: '"Syne", sans-serif',
+                    }}
+                >
+                    {current + 1}/{total}
+                </Typography>
+
+                {/* Score */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.4, flexShrink: 0 }}>
+                    <EmojiEventsIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#64748b' }}>
                         {score}
                     </Typography>
                 </Box>
             </Box>
 
-            {/* Pergunta */}
+            {/* Question text */}
             <Typography
                 variant="h6"
                 tabIndex={-1}
                 ref={headingRef}
                 sx={{
                     fontWeight: 700,
-                    lineHeight: 1.45,
-                    color: '#1e293b', // Cinza escuro para melhor legibilidade
+                    lineHeight: 1.5,
+                    color: '#0f172a',
                     letterSpacing: '-0.01em',
-                    fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                    fontSize: { xs: '1.05rem', sm: '1.2rem' },
                 }}
             >
                 {question.question}
             </Typography>
 
-            {/* Alternativas */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+            {/* Choices */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {(question.choices ?? []).map((text: string, idx: number) => {
                     const state = getChoiceState(idx);
+                    const s = stateStyles[state];
+
                     return (
                         <Button
-                            key={idx}
+                            key={text}
                             fullWidth
                             disableElevation
                             disabled={answered}
@@ -228,87 +253,96 @@ export default function QuestionScreen({
                                 alignItems: 'center',
                                 justifyContent: 'flex-start',
                                 textAlign: 'left',
-                                p: '12px 16px',
+                                p: '11px 14px',
                                 gap: 1.5,
                                 textTransform: 'none',
-                                borderRadius: '16px',
-                                fontWeight: 600,
-                                fontSize: '0.95rem',
-                                lineHeight: 1.4,
+                                borderRadius: '14px',
+                                fontWeight: 500,
+                                fontSize: '0.9rem',
+                                lineHeight: 1.45,
+                                border: '1.5px solid',
                                 transition: 'all 0.18s ease',
                                 cursor: answered ? 'default' : 'pointer',
-                                ...choiceStyles[state],
+                                bgcolor: s.bgcolor,
+                                borderColor: s.borderColor,
+                                color: s.color,
+                                opacity: s.opacity ?? 1,
+                                animation: s.animation,
+                                '@keyframes shake': {
+                                    '0%, 100%': { transform: 'translateX(0)' },
+                                    '20%': { transform: 'translateX(-5px)' },
+                                    '60%': { transform: 'translateX(5px)' },
+                                },
+                                '&:hover': answered ? {} : (s['&:hover'] ?? {}),
                                 '&.Mui-disabled': {
-                                    ...choiceStyles[state],
+                                    bgcolor: s.bgcolor,
+                                    borderColor: s.borderColor,
+                                    color: s.color,
+                                    opacity: s.opacity ?? 1,
                                 },
                             }}
                         >
+                            {/* Label badge */}
                             <Box
                                 sx={{
-                                    width: 32,
-                                    height: 32,
-                                    borderRadius: '10px',
+                                    width: 30,
+                                    height: 30,
+                                    borderRadius: '9px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     flexShrink: 0,
                                     fontFamily: '"Syne", sans-serif',
                                     fontWeight: 700,
-                                    fontSize: '0.85rem',
+                                    fontSize: '0.8rem',
                                     transition: 'all 0.18s ease',
-                                    ...labelColors[state],
+                                    bgcolor: s.labelBg,
+                                    color: s.labelColor,
                                 }}
                             >
-                                {state === 'correct' ? (
-                                    <CheckCircleOutlineIcon sx={{ fontSize: 18 }} />
-                                ) : state === 'wrong' ? (
-                                    <HighlightOffIcon sx={{ fontSize: 18 }} />
-                                ) : (
-                                    LABELS[idx]
-                                )}
+                                {getLabelIcon(state, idx)}
                             </Box>
-                            <Box component="span" sx={{ flex: 1 }}>
-                                {text}
-                            </Box>
+
+                            <Box component="span" sx={{ flex: 1 }}>{text}</Box>
                         </Button>
                     );
                 })}
             </Box>
 
-            {/* Explicação */}
-            <Collapse in={answered} timeout={300}>
+            {/* Explanation */}
+            <Collapse in={answered} timeout={250}>
                 <Box
                     aria-live="polite"
                     sx={{
-                        bgcolor: isCorrectAnswer ? '#f0fdf4' : '#f8fafc',
-                        border: '1px solid',
-                        borderColor: isCorrectAnswer ? '#bbf7d0' : '#e2e8f0',
-                        borderRadius: '16px',
-                        p: 2,
-                        mt: 0.5,
+                        borderRadius: '14px',
+                        p: '14px 16px',
+                        bgcolor: isCorrectAnswer ? '#f0fdf4' : '#fff7ed',
+                        borderLeft: '3px solid',
+                        borderColor: isCorrectAnswer ? '#22c55e' : '#f97316',
+                        mt: -0.5,
                     }}
                 >
                     <Typography
                         variant="body2"
                         sx={{
-                            color: isCorrectAnswer ? '#166534' : '#334155',
+                            color: isCorrectAnswer ? '#166534' : '#7c2d12',
                             fontWeight: 500,
-                            lineHeight: 1.6,
-                            mb: 1.5
+                            lineHeight: 1.65,
+                            mb: 1.5,
                         }}
                     >
                         {question.explanation ||
                             (isCorrectAnswer
-                                ? '✅ Resposta correta! Excelente.'
-                                : `❌ A alternativa correta era: ${question.choices?.[correctIdx]}`)}
+                                ? '✅ Correto! Excelente.'
+                                : `❌ Correto: ${question.choices?.[correctIdx]}`)}
                     </Typography>
 
-                    {/* Barra de contagem regressiva para auto-avanço */}
+                    {/* Auto-advance countdown bar */}
                     <Box
                         sx={{
-                            height: 4,
+                            height: 3,
                             borderRadius: 999,
-                            bgcolor: isCorrectAnswer ? 'rgba(34, 197, 94, 0.2)' : '#e2e8f0',
+                            bgcolor: isCorrectAnswer ? 'rgba(34,197,94,0.2)' : 'rgba(249,115,22,0.15)',
                             overflow: 'hidden',
                         }}
                     >
@@ -316,7 +350,7 @@ export default function QuestionScreen({
                             sx={{
                                 height: '100%',
                                 borderRadius: 999,
-                                bgcolor: isCorrectAnswer ? '#22c55e' : '#94a3b8',
+                                bgcolor: isCorrectAnswer ? '#22c55e' : '#f97316',
                                 width: `${autoAdvanceProgress}%`,
                                 transition: 'width 0.1s linear',
                             }}
@@ -325,7 +359,7 @@ export default function QuestionScreen({
                 </Box>
             </Collapse>
 
-            {/* Botão Próxima */}
+            {/* Next button */}
             <Button
                 variant="contained"
                 fullWidth
@@ -335,27 +369,22 @@ export default function QuestionScreen({
                 endIcon={<ArrowForwardIcon />}
                 sx={{
                     mt: 'auto',
-                    py: 1.6,
-                    fontSize: '1rem',
+                    py: 1.5,
+                    fontSize: '0.95rem',
                     fontWeight: 600,
                     textTransform: 'none',
-                    borderRadius: '16px',
+                    borderRadius: '14px',
                     bgcolor: '#5c67f2',
                     color: '#ffffff',
                     opacity: answered ? 1 : 0,
-                    transform: answered ? 'translateY(0)' : 'translateY(8px)',
-                    transition: 'all 0.25s ease',
+                    transform: answered ? 'translateY(0) scale(1)' : 'translateY(6px) scale(0.98)',
+                    transition: 'all 0.25s cubic-bezier(0.34,1.56,0.64,1)',
                     pointerEvents: answered ? 'auto' : 'none',
-                    '&:hover': {
-                        bgcolor: '#4f58d3',
-                    },
-                    '&.Mui-disabled': {
-                        bgcolor: '#cbd5e1',
-                        color: '#ffffff'
-                    }
+                    '&:hover': { bgcolor: '#4a53d4' },
+                    '&.Mui-disabled': { bgcolor: '#e2e8f0', color: '#fff' },
                 }}
             >
-                {isLast ? 'Ver resultado' : 'Próxima pergunta'}
+                {isLast ? 'Ver resultado' : 'Próxima'}
             </Button>
         </Box>
     );

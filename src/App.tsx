@@ -19,7 +19,7 @@ import QuestionScreen from './components/QuestionScreen';
 import { useQuiz } from './hooks/useQuiz';
 import theme from './theme';
 
-// Fundo Mesh-gradient ajustado para ser ainda mais suave e clean
+// Subtle animated mesh background
 const BgGradient = () => (
   <Box
     sx={{
@@ -27,10 +27,11 @@ const BgGradient = () => (
       inset: 0,
       zIndex: -1,
       background: `
-        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(224,231,255,0.4) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(199,210,254,0.3) 0%, transparent 60%),
-        #f8fafc
-      `,
+                radial-gradient(ellipse 70% 55% at 15% 8%, rgba(199,210,254,0.35) 0%, transparent 55%),
+                radial-gradient(ellipse 55% 50% at 85% 85%, rgba(167,243,208,0.2) 0%, transparent 55%),
+                radial-gradient(ellipse 45% 40% at 70% 15%, rgba(253,230,138,0.15) 0%, transparent 50%),
+                #f8fafc
+            `,
     }}
   />
 );
@@ -68,58 +69,78 @@ export default function App() {
 
       <a href="#main" className="skip-link">Pular para o conteúdo</a>
 
-      <Container component="main" id="main"
+      <Container
+        component="main"
+        id="main"
         maxWidth="sm"
         sx={{
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: 2, sm: 4 },
-          px: { xs: 2, sm: 3 }
+          py: { xs: 2, sm: 3.5 },
+          px: { xs: 2, sm: 3 },
         }}
       >
-        {/* ── Header ── */}
+        {/* Header */}
         <Box
           component="header"
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            mb: 3,
+            mb: 2.5,
           }}
         >
-          {/* Logo */}
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 800,
-              fontFamily: '"Syne", sans-serif',
-              letterSpacing: '-0.03em', // Resolve a sensação de texto "puxado/esticado"
-              background: 'linear-gradient(135deg, #5c67f2, #818cf8)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Quiz IA
-          </Typography>
+          {/* Logo mark */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #5c67f2, #818cf8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                flexShrink: 0,
+              }}
+            >
+              ✦
+            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 800,
+                fontFamily: '"Syne", sans-serif',
+                letterSpacing: '-0.03em',
+                color: '#1e293b',
+                fontSize: '1.1rem',
+              }}
+            >
+              Quiz IA
+            </Typography>
+          </Box>
 
-          {/* Ações (Placar e Sair) */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {/* Actions */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
-              icon={<EmojiEventsIcon sx={{ fontSize: '1.1rem !important', color: '#f59e0b !important' }} />}
+              icon={
+                <EmojiEventsIcon
+                  sx={{ fontSize: '1rem !important', color: '#f59e0b !important' }}
+                />
+              }
               label={score}
               size="small"
               sx={{
                 fontWeight: 700,
-                fontSize: '0.9rem',
+                fontSize: '0.85rem',
                 bgcolor: '#ffffff',
                 border: '1.5px solid #e2e8f0',
                 color: '#334155',
-                px: 0.5,
-                height: 32,
-                borderRadius: '16px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                px: 0.3,
+                height: 30,
+                borderRadius: '10px',
               }}
             />
 
@@ -127,23 +148,27 @@ export default function App() {
               <Button
                 size="small"
                 variant="outlined"
-                startIcon={<ExitToAppIcon sx={{ fontSize: '1.1rem !important' }} />}
+                startIcon={
+                  <ExitToAppIcon sx={{ fontSize: '1rem !important' }} />
+                }
                 onClick={resetToIntro}
                 disableElevation
                 sx={{
-                  borderRadius: '16px',
+                  borderRadius: '10px',
                   textTransform: 'none',
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   fontWeight: 600,
-                  px: 1.5,
-                  py: 0.5,
+                  px: 1.2,
+                  py: 0.4,
+                  height: 30,
+                  minHeight: 30,
                   borderColor: '#e2e8f0',
                   color: '#64748b',
                   bgcolor: '#ffffff',
                   '&:hover': {
                     borderColor: '#cbd5e1',
                     bgcolor: '#f8fafc',
-                    color: '#334155'
+                    color: '#334155',
                   },
                 }}
               >
@@ -153,36 +178,41 @@ export default function App() {
           </Box>
         </Box>
 
-        {/* ── Theme tag (Centralizada como no seu print) ── */}
+        {/* Theme tag */}
         {currentTheme && screen !== 'intro' && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: -2, zIndex: 1, position: 'relative' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'center', mb: -1.5, zIndex: 1, position: 'relative' }}
+          >
             <Chip
-              label={`Tema: ${currentTheme}`}
+              label={currentTheme}
+              size="small"
               sx={{
-                bgcolor: '#f5f7ff',
+                bgcolor: '#ffffff',
                 color: '#5c67f2',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                border: '1px solid #e0e7ff',
-                px: 1,
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                border: '1.5px solid #c7d2fe',
+                height: 26,
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(92,103,242,0.1)',
               }}
             />
           </Box>
         )}
 
-        {/* ── Main Card Moderno (Flat & Clean) ── */}
+        {/* Main Card */}
         <Card
           elevation={0}
           sx={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            borderRadius: '24px',
-            border: '1px solid #e2e8f0',
-            bgcolor: 'rgba(255, 255, 255, 0.8)', // Leve transparência para o mesh vazar sutilmente
-            backdropFilter: 'blur(8px)', // Efeito de vidro opaco
-            boxShadow: '0 12px 40px rgba(0,0,0,0.03)', // Sombra super premium e difusa
-            mt: currentTheme && screen !== 'intro' ? 2 : 0, // Ajuste de margem devido à tag de tema
+            borderRadius: '22px',
+            border: '1px solid rgba(226,232,240,0.8)',
+            bgcolor: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.03)',
+            mt: currentTheme && screen !== 'intro' ? 2 : 0,
           }}
         >
           <CardContent
@@ -190,19 +220,16 @@ export default function App() {
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              p: { xs: 3, sm: 4 },
-              '&:last-child': { pb: { xs: 3, sm: 4 } } // Sobrescreve comportamento padrão do MUI
+              p: { xs: 2.5, sm: 3.5 },
+              '&:last-child': { pb: { xs: 2.5, sm: 3.5 } },
             }}
           >
-
             {screen === 'intro' && (
               <IntroScreen onStart={startGame} loadError={loadError} />
             )}
-
             {screen === 'loading' && (
               <LoadingScreen theme={currentTheme} />
             )}
-
             {screen === 'question' && currentQuestion && (
               <QuestionScreen
                 question={currentQuestion}
@@ -220,7 +247,6 @@ export default function App() {
                 onAnswered={triggerAutoAdvance}
               />
             )}
-
             {screen === 'final' && (
               <FinalScreen
                 score={score}
@@ -230,19 +256,14 @@ export default function App() {
                 onRestart={resetToIntro}
               />
             )}
-
           </CardContent>
         </Card>
 
-        {/* ── Footer ── */}
-        <Box component="footer" sx={{ textAlign: 'center', pt: 3, pb: 1 }}>
+        {/* Footer */}
+        <Box component="footer" sx={{ textAlign: 'center', pt: 2.5, pb: 1 }}>
           <Typography
             variant="caption"
-            sx={{
-              color: '#94a3b8',
-              fontWeight: 500,
-              letterSpacing: '0.02em'
-            }}
+            sx={{ color: '#cbd5e1', fontWeight: 500, letterSpacing: '0.03em', fontSize: '0.7rem' }}
           >
             © 2026 Quiz IA
           </Typography>

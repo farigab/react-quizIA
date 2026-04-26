@@ -1,26 +1,32 @@
 import CasinoIcon from '@mui/icons-material/Casino';
+import EastIcon from '@mui/icons-material/East';
 import {
     Alert,
     Box,
     Button,
-    Grid2,
     IconButton,
+    InputAdornment,
     TextField,
     Typography,
 } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-const THEMES: string[] = [
-    'Cinema',
-    'Ciências',
-    'Contabilidade',
-    'Diversos',
-    'Enfermagem',
-    'Geografia',
-    'História',
-    'Literatura',
-    'Matemática',
-    'MPB',
+interface Theme {
+    label: string;
+    emoji: string;
+}
+
+const THEMES: Theme[] = [
+    { label: 'Cinema', emoji: '🎬' },
+    { label: 'Ciências', emoji: '🔬' },
+    { label: 'Contabilidade', emoji: '📊' },
+    { label: 'Diversos', emoji: '🌐' },
+    { label: 'Enfermagem', emoji: '🏥' },
+    { label: 'Geografia', emoji: '🌍' },
+    { label: 'História', emoji: '📜' },
+    { label: 'Literatura', emoji: '📚' },
+    { label: 'Matemática', emoji: '➗' },
+    { label: 'MPB', emoji: '🎵' },
 ];
 
 const STORAGE_KEY = 'showdo_miau_theme';
@@ -30,34 +36,23 @@ interface IntroScreenProps {
     loadError?: string | null;
 }
 
-const safeStorage: {
-    get: (k: string) => string | null;
-    set: (k: string, v: string) => void;
-} = {
+const safeStorage = {
     get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
-    set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* ignore storage errors */ } },
+    set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
 };
 
 export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreenProps>) {
     const [selected, setSelected] = useState<string | null>(() => safeStorage.get(STORAGE_KEY) || null);
     const initialCustom = (() => {
         const stored = safeStorage.get(STORAGE_KEY);
-        return stored && !THEMES.includes(stored) ? stored : '';
+        return stored && !THEMES.some(t => t.label === stored) ? stored : '';
     })();
     const [customTheme, setCustomTheme] = useState<string>(initialCustom);
     const [rolling, setRolling] = useState<boolean>(false);
-
-    const inputRef = useRef<HTMLInputElement | null>(null);
     const rollTimeoutRef = useRef<number | null>(null);
 
-
-
-    useEffect(() => {
-        return () => {
-            if (rollTimeoutRef.current !== null) {
-                clearTimeout(rollTimeoutRef.current);
-            }
-        };
+    useEffect(() => () => {
+        if (rollTimeoutRef.current !== null) clearTimeout(rollTimeoutRef.current);
     }, []);
 
     const handleThemeClick = useCallback((theme: string) => {
@@ -66,11 +61,10 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
         onStart(theme);
     }, [onStart]);
 
-    const handleCustomStart = (e?: React.FormEvent<HTMLFormElement>) => {
-        if (e) e.preventDefault();
+    const handleCustomStart = (e?: React.SyntheticEvent) => {
+        e?.preventDefault();
         const val = customTheme.trim();
         if (!val) return;
-
         setSelected(val);
         safeStorage.set(STORAGE_KEY, val);
         onStart(val);
@@ -82,10 +76,10 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
         rollTimeoutRef.current = globalThis.setTimeout(() => {
             setRolling(false);
             const rand = THEMES[Math.floor(Math.random() * THEMES.length)];
-            setSelected(rand);
-            safeStorage.set(STORAGE_KEY, rand);
-            onStart(rand);
-        }, 700);
+            setSelected(rand.label);
+            safeStorage.set(STORAGE_KEY, rand.label);
+            onStart(rand.label);
+        }, 600);
     };
 
     return (
@@ -93,18 +87,14 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 2.5,
-                maxWidth: '480px',
-                margin: '0 auto',
-                animation: 'fadeIn 0.4s ease',
-                '@keyframes fadeIn': {
-                    from: { opacity: 0, transform: 'translateY(10px)' },
-                    to: { opacity: 1, transform: 'translateY(0)' },
-                },
+                gap: 2,
             }}
         >
-            <Typography variant="body2" sx={{ color: '#64748b', mb: 1 }}>
-                Responda 10 perguntas. Toque em um tema para iniciar:
+            <Typography
+                variant="body2"
+                sx={{ color: 'text.secondary', mb: 0.5, fontWeight: 500 }}
+            >
+                Escolha um tema para começar
             </Typography>
 
             {loadError && (
@@ -113,137 +103,157 @@ export default function IntroScreen({ onStart, loadError }: Readonly<IntroScreen
                 </Alert>
             )}
 
-            {/* Grid de Temas */}
-            <Grid2 container spacing={1.5}>
-                {THEMES.map((theme) => {
-                    const isActive = selected === theme;
+            {/* Theme grid */}
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: 1,
+                }}
+            >
+                {THEMES.map(({ label, emoji }, i) => {
+                    const isActive = selected === label;
                     return (
-                        <Grid2 size={{ xs: 6, sm: 4 }} key={theme}>
-                            <Button
-                                fullWidth
-                                disableElevation
-                                variant={isActive ? 'contained' : 'outlined'}
-                                onClick={() => handleThemeClick(theme)}
-                                aria-pressed={isActive}
+                        <Button
+                            key={label}
+                            fullWidth
+                            disableElevation
+                            onClick={() => handleThemeClick(label)}
+                            aria-pressed={isActive}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'flex-start',
+                                gap: 1.2,
+                                py: 1.3,
+                                px: 1.6,
+                                borderRadius: '14px',
+                                textTransform: 'none',
+                                fontSize: '0.875rem',
+                                fontWeight: isActive ? 700 : 500,
+                                border: '1.5px solid',
+                                borderColor: isActive ? '#5c67f2' : '#e2e8f0',
+                                bgcolor: isActive ? '#eef0fd' : '#ffffff',
+                                color: isActive ? '#4a53d4' : '#334155',
+                                transition: 'all 0.18s ease',
+                                boxShadow: isActive
+                                    ? '0 0 0 3px rgba(92, 103, 242, 0.12)'
+                                    : 'none',
+                                animation: `fadeSlideIn 0.3s ease both`,
+                                animationDelay: `${i * 35}ms`,
+                                '@keyframes fadeSlideIn': {
+                                    from: { opacity: 0, transform: 'translateY(6px)' },
+                                    to: { opacity: 1, transform: 'translateY(0)' },
+                                },
+                                '&:hover': {
+                                    borderColor: isActive ? '#5c67f2' : '#c7d2fe',
+                                    bgcolor: isActive ? '#eef0fd' : '#f5f7ff',
+                                    color: isActive ? '#4a53d4' : '#4f46e5',
+                                },
+                            }}
+                        >
+                            <Box
+                                component="span"
                                 sx={{
-                                    py: 1.2,
-                                    borderRadius: '24px',
-                                    textTransform: 'none',
-                                    fontSize: '0.85rem',
-                                    fontWeight: isActive ? 600 : 500,
-                                    borderColor: isActive ? 'transparent' : '#e2e8f0',
-                                    bgcolor: isActive ? '#5c67f2' : '#ffffff',
-                                    color: isActive ? '#ffffff' : '#334155',
-                                    '&:hover': {
-                                        bgcolor: isActive ? '#4f58d3' : '#f8fafc',
-                                        borderColor: isActive ? 'transparent' : '#cbd5e1',
-                                    },
-                                    transition: 'all 0.2s ease',
-                                    boxShadow: isActive ? '0 4px 12px rgba(92, 103, 242, 0.3)' : 'none',
+                                    fontSize: '1.15rem',
+                                    lineHeight: 1,
+                                    flexShrink: 0,
+                                    // Slight scale on active
+                                    transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                                    transition: 'transform 0.18s ease',
                                 }}
                             >
-                                {theme}
-                            </Button>
-                        </Grid2>
+                                {emoji}
+                            </Box>
+                            <Box component="span">{label}</Box>
+                        </Button>
                     );
                 })}
-            </Grid2>
+            </Box>
 
-            {/* Botão de Dado Centralizado */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 1 }}>
+            {/* Dice button */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.5 }}>
+                <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
                 <IconButton
                     onClick={handleDice}
                     disabled={rolling}
                     aria-label="Sortear tema aleatório"
+                    size="small"
                     sx={{
-                        border: '1.5px dashed',
-                        borderColor: '#a5b4fc',
+                        border: '1.5px dashed #a5b4fc',
                         bgcolor: '#ffffff',
                         color: '#5c67f2',
-                        p: 1.5,
-                        '&:hover': {
-                            bgcolor: '#f5f7ff',
-                        },
+                        width: 36,
+                        height: 36,
+                        '&:hover': { bgcolor: '#f5f7ff', borderStyle: 'solid' },
+                        '&:disabled': { opacity: 0.6 },
                     }}
                 >
                     <CasinoIcon
                         sx={{
-                            fontSize: 24,
-                            animation: rolling ? 'spin 0.7s ease' : 'none',
+                            fontSize: 18,
+                            animation: rolling ? 'spin 0.6s ease' : 'none',
                             '@keyframes spin': {
-                                '0%': { transform: 'rotate(0deg)' },
-                                '100%': { transform: 'rotate(360deg)' },
+                                '0%': { transform: 'rotate(0deg) scale(1)' },
+                                '50%': { transform: 'rotate(180deg) scale(1.2)' },
+                                '100%': { transform: 'rotate(360deg) scale(1)' },
                             },
                         }}
                     />
                 </IconButton>
+                <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                    tema aleatório
+                </Typography>
+                <Box sx={{ flex: 1, height: '1px', bgcolor: '#e2e8f0' }} />
             </Box>
 
-            {/* Fundo levemente cinza para o input (igual ao print) */}
+            {/* Custom theme input */}
             <Box
                 component="form"
                 onSubmit={handleCustomStart}
-                sx={{
-                    display: 'flex',
-                    gap: 1.5,
-                    alignItems: 'center',
-                    bgcolor: '#f8fafc',
-                    p: 1,
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0'
-                }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}
             >
                 <TextField
-                    inputRef={inputRef}
                     fullWidth
                     size="small"
-                    placeholder="Tema personalizado"
+                    placeholder="Ou escreva seu próprio tema…"
                     value={customTheme}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCustomTheme(e.target.value)}
+                    onChange={(e) => setCustomTheme(e.target.value)}
                     variant="outlined"
+                    slotProps={{
+                        input: {
+                            endAdornment: customTheme.trim() ? (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        type="submit"
+                                        size="small"
+                                        sx={{
+                                            bgcolor: '#5c67f2',
+                                            color: '#fff',
+                                            width: 28,
+                                            height: 28,
+                                            borderRadius: '8px',
+                                            '&:hover': { bgcolor: '#4a53d4' },
+                                        }}
+                                    >
+                                        <EastIcon sx={{ fontSize: 15 }} />
+                                    </IconButton>
+                                </InputAdornment>
+                            ) : null,
+                        },
+                    }}
                     sx={{
                         '& .MuiOutlinedInput-root': {
-                            bgcolor: '#ffffff',
-                            borderRadius: '12px',
+                            bgcolor: '#f8fafc',
+                            borderRadius: '14px',
+                            fontSize: '0.875rem',
                             '& fieldset': { borderColor: '#e2e8f0' },
-                            '&:hover fieldset': { borderColor: '#cbd5e1' },
-                            '&.Mui-focused fieldset': { borderColor: '#5c67f2' },
+                            '&:hover fieldset': { borderColor: '#c7d2fe' },
+                            '&.Mui-focused fieldset': { borderColor: '#5c67f2', borderWidth: '1.5px' },
                         },
-                        '& .MuiInputBase-input': {
-                            fontSize: '0.9rem',
-                            color: '#334155',
-                        }
                     }}
                 />
-                <Button
-                    type="submit"
-                    variant="contained"
-                    disableElevation
-                    disabled={!customTheme.trim()}
-                    sx={{
-                        bgcolor: '#5c67f2',
-                        color: '#fff',
-                        borderRadius: '12px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        px: 3,
-                        py: 1,
-                        whiteSpace: 'nowrap',
-                        '&:hover': {
-                            bgcolor: '#4f58d3',
-                        },
-                    }}
-                >
-                    Usar tema
-                </Button>
             </Box>
-
-            <Typography
-                variant="caption"
-                sx={{ color: '#94a3b8', textAlign: 'center', display: 'block', mt: 1 }}
-            >
-                Toque em um tema para iniciar automaticamente.
-            </Typography>
         </Box>
     );
 }
