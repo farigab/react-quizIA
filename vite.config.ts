@@ -8,14 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifestFilename: 'site.webmanifest',
-      includeAssets: [
-        'src/assets/icons/favicon.ico',
-        'src/assets/icons/favicon-16x16.png',
-        'src/assets/icons/favicon-32x32.png',
-        'src/assets/icons/apple-touch-icon.png',
-        'src/assets/icons/android-chrome-192x192.png',
-        'src/assets/icons/android-chrome-512x512.png'
-      ],
+      includeAssets: [],
       manifest: {
         name: 'Quiz IA',
         short_name: 'Quiz',
@@ -25,12 +18,12 @@ export default defineConfig({
         theme_color: '#4f46e5',
         icons: [
           {
-            src: 'src/assets/icons/android-chrome-192x192.png',
+            src: '/android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'src/assets/icons/android-chrome-512x512.png',
+            src: '/android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           }
